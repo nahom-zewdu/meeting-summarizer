@@ -8,3 +8,10 @@ wheels/
 
 # Virtual environments
 .venv
+
+# environment variables
+.env
+.env.*
+# 0x0 files
+gcp-cmds.txt
+
