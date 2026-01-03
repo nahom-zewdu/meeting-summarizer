@@ -1,23 +1,23 @@
-from googleapiclient.discovery import build
-from google.auth import default
-import os
+import json
 
-def test_drive_access(request):
-    creds, _ = default()
-    drive = build("drive", "v3", credentials=creds)
+def ingest_drive_file(event, context):
+    """
+    Triggered on any file creation in Drive.
+    Filters for audio files and logs valid candidates.
+    """
 
-    folder_id = os.environ["DRIVE_FOLDER_ID"]
+    data = event.get("data", {})
+    file_id = data.get("id")
+    name = data.get("name", "")
+    mime = data.get("mimeType", "")
 
-    results = drive.files().list(
-        q=f"'{folder_id}' in parents",
-        fields="files(id, name, mimeType)"
-    ).execute()
+    # Hard filters (v1)
+    if not mime.startswith("audio/"):
+        print(f"Ignored non-audio file: {name} ({mime})")
+        return
 
-    files = results.get("files", [])
-    
-    print(f"Found {len(files)} files in folder ID {folder_id}.")
+    if not name.lower().endswith((".mp3", ".m4a", ".wav", ".aac")):
+        print(f"Ignored unsupported audio type: {name}")
+        return
 
-    return {
-        "file_count": len(files),
-        "files": files
-    }
+    print(f"Accepted audio file: {name} ({mime}), id={file_id}")
